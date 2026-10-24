@@ -6,7 +6,7 @@
   var fs = require('fs');
   var os = require('os');
   var http = require('http');
-  var PORT = 38770;
+  var PORT = 38772;
   var RECEIVER_PORT = 38767;
   var MAX_REQUEST_BYTES = 512;
   var MAX_REPORT_BYTES = 256 * 1024;
@@ -30,28 +30,36 @@
     // Only the executable name is displayed; omit arguments, which could include credentials.
     return raw.split('\u0000')[0].slice(0, 160);
   }
+  // Full process census; never read process environments or command arguments.
+  // /proc/<pid>/cmdline is used only for argv[0], the executable path.
   function scan() {
     var pids = [];
     try { pids = fs.readdirSync('/proc').filter(function (x) { return /^\d+$/.test(x); }); }
-    catch (e) { return { error: 'Cannot list /proc: ' + e.code, count: 0, matches: [] }; }
-    var matches = [];
+    catch (e) { return { error: 'Cannot list /proc: ' + e.code, count: 0, all: [], matches: [] }; }
+    var all = [], matches = [], unreadable = 0;
     pids.forEach(function (pid) {
-      var status = fields(read('/proc/' + pid + '/status'));
+      var raw = read('/proc/' + pid + '/status');
+      var status = fields(raw);
+      if (!raw) unreadable++;
       var command = firstCommand(read('/proc/' + pid + '/cmdline'));
-      var name = status.Name || '';
-      if (interest.test(name + ' ' + command)) {
-        matches.push({pid: Number(pid), name: name, command: command,
-          uid: status.Uid ? status.Uid.split(/\s+/)[0] : '?',
-          ppid: status.PPid || '?',
-          smack: read('/proc/' + pid + '/attr/current') || '(unreadable)'});
-      }
+      var name = status.Name || '(unreadable)';
+      var item = {
+        pid: Number(pid), name: name, command: command,
+        uid: status.Uid ? status.Uid.split(/\s+/)[0] : '?',
+        ppid: status.PPid || '?',
+        smack: read('/proc/' + pid + '/attr/current') || '(unreadable)'
+      };
+      all.push(item);
+      if (interest.test(name + ' ' + command)) matches.push(item);
     });
+    all.sort(function (a,b) { return a.pid - b.pid; });
     matches.sort(function (a,b) { return a.pid - b.pid; });
-    return {count: pids.length, matches: matches.slice(0, 100), truncated: matches.length > 100};
+    return {count: pids.length, collected: all.length, unreadable: unreadable,
+      all: all, matches: matches, truncated: false};
   }
   function report() {
     return {
-      version: '0.5.0',
+      version: '6.0.0',
       host: {node: process.version, architecture: process.arch,
         uid: process.getuid ? process.getuid() : null,
         gid: process.getgid ? process.getgid() : null,

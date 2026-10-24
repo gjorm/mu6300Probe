@@ -1,9 +1,9 @@
 {
   "name": "tizen-local-process-export",
-  "version": "0.5.0",
-  "description": "Read-only process diagnostics with Samsung TV D-pad navigation and opt-in private LAN export",
+  "version": "6.0.0",
+  "description": "Read-only full /proc census, Samsung TV remote navigation and one-time authenticated local export",
   "packageType": "app",
-  "appName": "Local Process Survey v0.5",
+  "appName": "MU6300 Process Survey v6",
   "appPath": "index.html",
   "serviceFile": "service.js",
   "keys": []
