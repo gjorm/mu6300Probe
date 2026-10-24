@@ -1,11 +1,12 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Local Process Survey</title>
+<html><head><meta charset="utf-8"><title>Local Process Survey v0.4</title>
 <style>
 body{font-family:Arial,sans-serif;color:#eaf2ff;background:#0b1730;padding:26px;font-size:20px}
 h1{font-size:34px;margin:8px 0} h2{font-size:26px}
 .panel{background:#15294a;padding:18px;border-radius:10px;margin:16px 0}
 small,.note{font-size:17px;color:#c0d1ee}
 pre{white-space:pre-wrap;word-break:break-word;font-size:17px;line-height:1.45}
+button:focus,input:focus{outline:4px solid #f7d34e;outline-offset:3px}
 button{font-size:21px;padding:12px 18px;background:#2469a6;color:white;border:0;border-radius:8px;margin:7px}
 input{font-size:22px;padding:12px;border-radius:7px;border:2px solid #4c668e;background:#f4f7fa;color:#152037;max-width:96%;box-sizing:border-box}
 label{display:block;margin:12px 0 6px}
@@ -13,7 +14,8 @@ label{display:block;margin:12px 0 6px}
 .meta{color:#bfd0e5;font-size:17px;word-break:break-all}
 #transfer{font-size:20px;padding:12px;background:#243c5a;border-radius:7px}
 </style></head><body>
-<h1>Local Process Survey <small>v0.3</small></h1>
+<h1>Local Process Survey <small>v0.4</small></h1>
+<div class="panel"><button id="leave" type="button">&#8592; Back to TizenBrew</button> <small>Remote Return/Back also works</small></div>
 <p class="note">Reads process metadata only. Nothing is exported until you press Send.</p>
 <div class="panel">
   <button id="refresh">Refresh survey</button> <button id="preview">Preview full JSON</button>
@@ -30,6 +32,7 @@ label{display:block;margin:12px 0 6px}
   <input id="pin" type="text" autocomplete="off" spellcheck="false" maxlength="8" placeholder="Enter 8 digits" />
   <div><button id="send">Send survey to receiver</button></div>
   <div id="transfer">Nothing has been sent.</div>
+<div><button id="leaveBottom" type="button">&#8592; Back to TizenBrew</button></div>
   <p class="note">Uses HTTP directly from this TV to the receiver on TCP port 38767. No cloud storage. Review the saved report on your computer before sharing it.</p>
 </div>
 <div class="panel" id="previewBox" style="display:none"><h2>Full survey preview</h2><pre id="full"></pre></div>
@@ -41,7 +44,7 @@ label{display:block;margin:12px 0 6px}
  function para(cl,txt){var d=document.createElement('div');d.className=cl;d.appendChild(document.createTextNode(txt));return d;}
  function refresh(){
    state.textContent='Reading processes...';cached=null;
-   var x=new XMLHttpRequest();x.open('GET','http://127.0.0.1:38766/survey',true);x.timeout=8000;
+   var x=new XMLHttpRequest();x.open('GET','http://127.0.0.1:38768/survey',true);x.timeout=8000;
    x.onreadystatechange=function(){if(x.readyState!==4)return;
      if(x.status!==200){state.textContent='Local survey HTTP '+x.status;return;}
      try{var r=JSON.parse(x.responseText);cached=r;var h=r.host||{};
@@ -67,7 +70,7 @@ label{display:block;margin:12px 0 6px}
    if(!address){transfer.textContent='Enter a private IPv4 address.';return;}
    if(!cached){transfer.textContent='Refresh the survey first.';return;}
    transfer.textContent='Sending over local network...';
-   var x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:38766/export',true);
+   var x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:38768/export',true);
    x.timeout=15000;x.setRequestHeader('Content-Type','application/json');
    x.onreadystatechange=function(){if(x.readyState!==4)return;
      var data;try{data=JSON.parse(x.responseText);}catch(e){data={error:x.responseText||'No response'};}
@@ -78,6 +81,26 @@ label{display:block;margin:12px 0 6px}
    x.ontimeout=function(){transfer.textContent='Export timed out.';};
    x.send(JSON.stringify({receiver:address,pin:pin}));
  }
+ function exitModule(){
+   // TizenBrew opens app modules with a normal location.href navigation.
+   // Going back should restore its module selection screen.
+   if(window.history && window.history.length > 1){ window.history.back(); return; }
+   // Standalone launch fallback: exit the TizenBrew app itself, not the TV.
+   try{if(window.tizen && tizen.application){tizen.application.getCurrentApplication().exit();return;}}catch(e){}
+   state.textContent='Use the remote Home button to leave the application.';
+ }
+ document.getElementById('leave').onclick=exitModule;
+ document.getElementById('leaveBottom').onclick=exitModule;
+ // Back is a system key; DO NOT register it via tvinputdevice.registerKey.
+ window.addEventListener('keydown',function(e){
+   if(e.keyCode === 10009 || e.keyCode === 27){
+     if(e.preventDefault)e.preventDefault();
+     exitModule();
+   }
+ });
+ window.addEventListener('tizenhwkey',function(e){
+   if(e.keyName === 'back'){ if(e.preventDefault)e.preventDefault();exitModule(); }
+ });
  document.getElementById('refresh').onclick=refresh;
  document.getElementById('send').onclick=exportReport;
  document.getElementById('preview').onclick=function(){

@@ -1,9 +1,9 @@
 {
   "name": "tizen-local-process-export",
-  "version": "0.3.0",
-  "description": "Read-only process survey with an opt-in local network export",
+  "version": "0.4.0",
+  "description": "Local-only process survey, opt-in export, TV remote Back and Exit support",
   "packageType": "app",
-  "appName": "Local Process Survey",
+  "appName": "Local Process Survey v0.4",
   "appPath": "index.html",
   "serviceFile": "service.js",
   "keys": []
