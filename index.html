@@ -214,7 +214,7 @@
     if(!/^\d{8}$/.test(pin)){transfer.textContent='Enter the 8-digit receiver code first.';return;}
     if(!cached){transfer.textContent='Refresh survey before sending.';return;}
     transfer.textContent='Sending only to the selected private IP...';
-    var x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:38770/export',true);x.timeout=15000;
+    var x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:38772/export',true);x.timeout=15000;
     x.setRequestHeader('Content-Type','application/json');
     x.onreadystatechange=function(){if(x.readyState!==4)return;
       var result={};try{result=JSON.parse(x.responseText);}catch(e){result={error:x.responseText||'No response'};}
