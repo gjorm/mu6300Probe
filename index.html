@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MU6300 Local Process Survey v6</title>
+<title>MU6300 Local Process Survey v7</title>
 <style>
   body { font: 22px Arial, sans-serif; margin:0; padding:25px 35px 100px; color:#e9f3ff; background:#101c38; }
   h1 { font-size:36px; margin:7px 0 12px; }
@@ -31,7 +31,7 @@
 </style>
 </head>
 <body>
-<h1>MU6300 Local Process Survey <span class="note">v6</span></h1>
+<h1>MU6300 Local Process Survey <span class="note">v7</span></h1>
 <p class="note">Use remote &#8593;/&#8595; to choose a control, OK to select, and Return to exit. Enter the receiver IP and one-time code using the on-screen number pad.</p>
 <div class="panel">
   <button id="leave" type="button" class="button action">&#8592; Return to TizenBrew</button>
@@ -170,7 +170,7 @@
     if(token!==refreshSequence)return;
     state.textContent=attempt ? 'Waiting for local service (attempt '+(attempt+1)+'/4)...' : 'Reading processes...';
     var x=new XMLHttpRequest();
-    x.open('GET','http://127.0.0.1:38772/survey',true);
+    x.open('GET','http://127.0.0.1:38774/survey',true);
     x.timeout=12000;
     var handled=false;
     function fail(message){
@@ -214,7 +214,7 @@
     if(!/^\d{8}$/.test(pin)){transfer.textContent='Enter the 8-digit receiver code first.';return;}
     if(!cached){transfer.textContent='Refresh survey before sending.';return;}
     transfer.textContent='Sending only to the selected private IP...';
-    var x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:38772/export',true);x.timeout=15000;
+    var x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:38774/export',true);x.timeout=15000;
     x.setRequestHeader('Content-Type','application/json');
     x.onreadystatechange=function(){if(x.readyState!==4)return;
       var result={};try{result=JSON.parse(x.responseText);}catch(e){result={error:x.responseText||'No response'};}

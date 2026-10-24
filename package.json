@@ -1,9 +1,9 @@
 {
   "name": "tizen-local-process-export",
-  "version": "6.0.0",
+  "version": "7.0.0",
   "description": "Read-only full /proc census, Samsung TV remote navigation and one-time authenticated local export",
   "packageType": "app",
-  "appName": "MU6300 Process Survey v6",
+  "appName": "MU6300 Process Survey v7",
   "appPath": "index.html",
   "serviceFile": "service.js",
   "keys": []
