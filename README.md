@@ -1,24 +1,31 @@
-# MU6300 read-only probe for TizenBrew
+# MU6300 Local Process Survey — v0.5.0
 
-An experimental TizenBrew application module for Samsung Tizen 3.0.
+TizenBrew application module for Samsung Tizen 3.0 (tested in earlier revisions on a 2017 MU6300).
 
-It uses `serviceFile` to start a localhost-only HTTP listener on 127.0.0.1:38765. The application page polls it and displays Node version, CPU architecture, UID/GID, selected process status fields, and the SMACK security label (when readable).
+## Changes
 
-## Safety and limits
+- Explicit D-pad remote focus navigation: Up/Down move between controls, OK activates; Back returns to TizenBrew.
+- Visible yellow focus outline. Small remote key diagnostics line for troubleshooting.
+- Two on-screen numeric editors operated only with D-pad/OK: private receiver IP and the 8-digit one-time receiver code.
+- `Keyboard` key in editor opens a prompt for use with keyboards or TV IME as an optional shortcut.
+- Report generation remains read-only, export occurs only when Send is activated.
 
-- No root exploit, filesystem modifications, package removal, external data transmission, or command execution.
-- The service runs with TizenBrew's existing permissions, **not necessarily UID 5001**.
-- It may fail if this particular Tizen version prevents a local HTTP listener or web page requests to the port.
-- This application is experimental and has not been tested on the actual TV.
-- Review the code before running; the entire module consists of `package.json`, `service.js`, and `index.html`.
+## Privacy
 
-## Installation through GitHub / jsDelivr
+Public repo contains source code only. No actual IP address, MAC, serial number, receiver code or report is embedded. The IP and code are typed *at runtime* on the TV and are not written to disk. Report transfer is unencrypted local HTTP, to a user-selected private RFC1918 address on TCP 38767. Review reports locally before sharing.
 
-1. Create a **public** GitHub repository, e.g. `mu6300-probe`.
-2. Put `package.json`, `index.html`, `service.js` in the **repository root**, on the `main` branch.
-3. Check `https://cdn.jsdelivr.net/gh/YOUR_GITHUB_USER/mu6300-probe/package.json` loads valid JSON (replace username).
-4. On the TV in TizenBrew Next Generation open Add Module and choose **GitHub** if the UI asks for type.
-5. Enter `YOUR_GITHUB_USER/mu6300-probe` in a GitHub-specific field, or `gh/YOUR_GITHUB_USER/mu6300-probe` if asked for a full CDN module path.
-6. Start the **MU6300 Read-Only Probe** module. A successful result displays runtime and privilege information.
+## Deploy
 
-The module is loaded through jsDelivr; publishing *code* on GitHub does not send the diagnostic results to GitHub. The results stay in the TV's browser and local loopback interface.
+Publish `package.json`, `index.html`, `service.js` in the existing GitHub repository root; create tag `v0.5.0` pointing at that commit. Add module using `gh/OWNER/REPO@v0.5.0`. Don't reuse an old tag because jsDelivr caches it.
+
+The TV-side loopback service is port 38770 (changed from v0.4's 38768 to avoid conflicts). The receiver is unchanged, port 38767. It can be started on Fedora with `python3 ~/Downloads/tv-survey-receiver.py --bind <YOUR_LILBOX_IP>`.
+
+## Remote controls
+
+- **Up/Down**: move focus between actions.
+- **OK**: activate highlighted action.
+- **Edit receiver IP / Edit code**: opens a 4 × 4 numerical keypad.
+- **In keypad**: arrows move among digits; OK enters a digit; Save validates; Cancel or remote Return closes.
+- **Return** (outside keypad): return to TizenBrew if history allows; otherwise exit the application.
+
+No root, firmware change, package deletion, or shell commands are performed.

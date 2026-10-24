@@ -1,113 +1,270 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Local Process Survey v0.4</title>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MU6300 Local Process Survey v0.5</title>
 <style>
-body{font-family:Arial,sans-serif;color:#eaf2ff;background:#0b1730;padding:26px;font-size:20px}
-h1{font-size:34px;margin:8px 0} h2{font-size:26px}
-.panel{background:#15294a;padding:18px;border-radius:10px;margin:16px 0}
-small,.note{font-size:17px;color:#c0d1ee}
-pre{white-space:pre-wrap;word-break:break-word;font-size:17px;line-height:1.45}
-button:focus,input:focus{outline:4px solid #f7d34e;outline-offset:3px}
-button{font-size:21px;padding:12px 18px;background:#2469a6;color:white;border:0;border-radius:8px;margin:7px}
-input{font-size:22px;padding:12px;border-radius:7px;border:2px solid #4c668e;background:#f4f7fa;color:#152037;max-width:96%;box-sizing:border-box}
-label{display:block;margin:12px 0 6px}
-.item{border-top:1px solid #385372;padding:12px 0}
-.meta{color:#bfd0e5;font-size:17px;word-break:break-all}
-#transfer{font-size:20px;padding:12px;background:#243c5a;border-radius:7px}
-</style></head><body>
-<h1>Local Process Survey <small>v0.4</small></h1>
-<div class="panel"><button id="leave" type="button">&#8592; Back to TizenBrew</button> <small>Remote Return/Back also works</small></div>
-<p class="note">Reads process metadata only. Nothing is exported until you press Send.</p>
+  body { font: 22px Arial, sans-serif; margin:0; padding:25px 35px 100px; color:#e9f3ff; background:#101c38; }
+  h1 { font-size:36px; margin:7px 0 12px; }
+  h2 { font-size:27px; margin:3px 0 16px; }
+  p { line-height:1.5; }
+  .note { font-size:18px; color:#d0ddf2; }
+  .panel { padding:20px; background:#1a345e; border-radius:12px; margin-top:18px; }
+  .button { border:3px solid transparent; font-size:23px; font-weight:600; color:white; background:#2668ae; padding:16px 21px; border-radius:9px; margin:5px 8px 5px 0; cursor:pointer; }
+  .button:focus, .button.tv-focus, .key:focus, .key.tv-focus { outline:5px solid #ffdb4d !important; outline-offset:2px; border-color:#fff1a8; background:#397ad0; }
+  .button:active, .key:active { background:#75a5ef; }
+  pre { font:18px/1.4 monospace; white-space:pre-wrap; overflow-wrap:break-word; }
+  .meta { font-size:17px; color:#c7ddf6; overflow-wrap:break-word; }
+  .item { margin:10px 0 0; padding:12px 0 0; border-top:1px solid #557097; }
+  .value { font-size:23px; font-family:monospace; padding:17px; background:#0e2549; border:2px solid #7e9ac4; border-radius:8px; max-width:700px; min-height:30px; overflow-wrap:anywhere; }
+  .field { margin:17px 0 8px; }
+  .status { background:#10284c; padding:13px; margin-top:12px; border-radius:7px; min-height:30px; }
+  #previewBox { display:none; }
+  #overlay { display:none; position:fixed; z-index:9999; top:0; right:0; bottom:0; left:0; background:rgba(0,0,0,.91); padding:25px; overflow-y:auto; }
+  #editor { width:720px; max-width:96%; margin:12px auto; background:#203759; padding:24px; border-radius:14px; }
+  #entryText { font-size:29px; font-family:monospace; background:#102645; border:2px solid #7890be; padding:15px; min-height:36px; overflow-wrap:anywhere; }
+  #pad { margin-top:22px; }
+  .key { display:inline-block; width:23%; height:78px; margin:.5%; vertical-align:middle; box-sizing:border-box; border:3px solid transparent; background:#37679e; color:white; font-size:29px; border-radius:7px; }
+  #inputHelp { color:#ffe599; font-size:18px; min-height:25px; }
+  #remoteDebug { font:16px monospace; color:#c7cfe0; }
+</style>
+</head>
+<body>
+<h1>MU6300 Local Process Survey <span class="note">v0.5</span></h1>
+<p class="note">Use remote &#8593;/&#8595; to choose a control, OK to select, and Return to exit. Enter the receiver IP and one-time code using the on-screen number pad.</p>
 <div class="panel">
-  <button id="refresh">Refresh survey</button> <button id="preview">Preview full JSON</button>
-  <span class="note" id="state">Loading...</span>
+  <button id="leave" type="button" class="button action">&#8592; Return to TizenBrew</button>
+  <button id="refresh" type="button" class="button action">Refresh survey</button>
+  <button id="preview" type="button" class="button action">Toggle full JSON</button>
+  <div id="state" class="status">Loading...</div>
+  <div id="remoteDebug">Remote diagnostic: waiting for key</div>
 </div>
 <div class="panel"><h2>Execution context</h2><pre id="host">Loading...</pre></div>
 <div class="panel"><h2>Matching processes</h2><div id="matches">Loading...</div></div>
 <div class="panel">
-  <h2>Export privately to your LAN computer</h2>
-  <p class="note">Enter the receiver computer's private IPv4 address and the eight-digit one-time code shown in its terminal. This address is not included in the public module or saved on the TV.</p>
-  <label for="address">Receiver IPv4 address</label>
-  <input id="address" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 192.168.1.10" />
-  <label for="pin">One-time receiver code (8 digits)</label>
-  <input id="pin" type="text" autocomplete="off" spellcheck="false" maxlength="8" placeholder="Enter 8 digits" />
-  <div><button id="send">Send survey to receiver</button></div>
-  <div id="transfer">Nothing has been sent.</div>
-<div><button id="leaveBottom" type="button">&#8592; Back to TizenBrew</button></div>
-  <p class="note">Uses HTTP directly from this TV to the receiver on TCP port 38767. No cloud storage. Review the saved report on your computer before sharing it.</p>
+  <h2>Private export to your LAN computer</h2>
+  <p class="note">Nothing is sent until you select Send. The address and code are entered on the television and are not included in the public GitHub code.</p>
+  <div class="field">Receiver IPv4 address</div>
+  <div class="value" id="addressValue">Not entered</div>
+  <button id="editAddress" type="button" class="button action">Edit receiver IP</button>
+  <div class="field">One-time receiver code (8 digits)</div>
+  <div class="value" id="pinValue">Not entered</div>
+  <button id="editPin" type="button" class="button action">Edit receiver code</button>
+  <div style="margin-top:22px"><button id="send" type="button" class="button action">Send survey to receiver</button></div>
+  <div id="transfer" class="status">Nothing has been sent.</div>
+  <button id="leaveBottom" type="button" class="button action">&#8592; Return to TizenBrew</button>
+  <p class="note">Local HTTP export to the receiver on port 38767. Review your JSON report locally before sharing it.</p>
 </div>
-<div class="panel" id="previewBox" style="display:none"><h2>Full survey preview</h2><pre id="full"></pre></div>
+<div class="panel" id="previewBox"><h2>Full survey JSON</h2><pre id="full"></pre></div>
+<div id="overlay" role="dialog" aria-modal="true" aria-label="Number pad">
+  <div id="editor">
+    <h2 id="editorTitle">Enter value</h2>
+    <div id="entryText"></div>
+    <p class="note">Remote arrows move between keys. OK enters a digit. Return cancels.</p>
+    <div id="inputHelp"></div>
+    <div id="pad"></div>
+  </div>
+</div>
 <script>
-(function(){
- var host=document.getElementById('host'),matches=document.getElementById('matches');
- var state=document.getElementById('state'),transfer=document.getElementById('transfer');
- var cached=null;
- function para(cl,txt){var d=document.createElement('div');d.className=cl;d.appendChild(document.createTextNode(txt));return d;}
- function refresh(){
-   state.textContent='Reading processes...';cached=null;
-   var x=new XMLHttpRequest();x.open('GET','http://127.0.0.1:38768/survey',true);x.timeout=8000;
-   x.onreadystatechange=function(){if(x.readyState!==4)return;
-     if(x.status!==200){state.textContent='Local survey HTTP '+x.status;return;}
-     try{var r=JSON.parse(x.responseText);cached=r;var h=r.host||{};
-       host.textContent=JSON.stringify({version:r.version,node:h.node,kernel:h.kernel,architecture:h.architecture,uid:h.uid,gid:h.gid,smack:h.smack,capEff:(h.status||{}).CapEff},null,2);
-       var p=r.processes||{};matches.textContent='';
-       matches.appendChild(para('meta',String(p.count||0)+' process IDs visible; '+(p.matches||[]).length+' keyword matches'));
-       if(p.error)matches.appendChild(para('meta',p.error));
-       (p.matches||[]).forEach(function(e){var el=document.createElement('div');el.className='item';
-          el.appendChild(para('',e.name+' [PID '+e.pid+', UID '+e.uid+']'));
-          if(e.command)el.appendChild(para('meta',e.command));
-          el.appendChild(para('meta','SMACK: '+e.smack));matches.appendChild(el);
-       });
-       state.textContent='Survey ready';
-     }catch(e){state.textContent='Invalid survey: '+e;}
-   };
-   x.onerror=function(){state.textContent='Local survey unavailable';};
-   x.ontimeout=function(){state.textContent='Survey timed out';};x.send();
- }
- function exportReport(){
-   var address=document.getElementById('address').value.replace(/^\s+|\s+$/g,'');
-   var pin=document.getElementById('pin').value.replace(/^\s+|\s+$/g,'');
-   if(!/^\d{8}$/.test(pin)){transfer.textContent='Enter the eight-digit code shown on LilBox.';return;}
-   if(!address){transfer.textContent='Enter a private IPv4 address.';return;}
-   if(!cached){transfer.textContent='Refresh the survey first.';return;}
-   transfer.textContent='Sending over local network...';
-   var x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:38768/export',true);
-   x.timeout=15000;x.setRequestHeader('Content-Type','application/json');
-   x.onreadystatechange=function(){if(x.readyState!==4)return;
-     var data;try{data=JSON.parse(x.responseText);}catch(e){data={error:x.responseText||'No response'};}
-     if(x.status===200&&data.ok){transfer.textContent='Export received by LilBox. Saved as '+data.filename;}
-     else{transfer.textContent='Export failed: '+(data.error||('HTTP '+x.status));}
-   };
-   x.onerror=function(){transfer.textContent='Export failed: local module service unavailable or blocked.';};
-   x.ontimeout=function(){transfer.textContent='Export timed out.';};
-   x.send(JSON.stringify({receiver:address,pin:pin}));
- }
- function exitModule(){
-   // TizenBrew opens app modules with a normal location.href navigation.
-   // Going back should restore its module selection screen.
-   if(window.history && window.history.length > 1){ window.history.back(); return; }
-   // Standalone launch fallback: exit the TizenBrew app itself, not the TV.
-   try{if(window.tizen && tizen.application){tizen.application.getCurrentApplication().exit();return;}}catch(e){}
-   state.textContent='Use the remote Home button to leave the application.';
- }
- document.getElementById('leave').onclick=exitModule;
- document.getElementById('leaveBottom').onclick=exitModule;
- // Back is a system key; DO NOT register it via tvinputdevice.registerKey.
- window.addEventListener('keydown',function(e){
-   if(e.keyCode === 10009 || e.keyCode === 27){
-     if(e.preventDefault)e.preventDefault();
-     exitModule();
-   }
- });
- window.addEventListener('tizenhwkey',function(e){
-   if(e.keyName === 'back'){ if(e.preventDefault)e.preventDefault();exitModule(); }
- });
- document.getElementById('refresh').onclick=refresh;
- document.getElementById('send').onclick=exportReport;
- document.getElementById('preview').onclick=function(){
-   if(!cached){state.textContent='Refresh the survey first.';return;}
-   var b=document.getElementById('previewBox');b.style.display='block';
-   document.getElementById('full').textContent=JSON.stringify(cached,null,2);
- };
- refresh();
+(function () {
+  'use strict';
+  var host=document.getElementById('host'), matches=document.getElementById('matches');
+  var state=document.getElementById('state'), transfer=document.getElementById('transfer');
+  var cached=null, receiver='', pin='', editing='', entry='', selected=0, padSelected=0;
+  var actions = ['leave','refresh','preview','editAddress','editPin','send','leaveBottom'];
+  var keys = ['1','2','3','Backspace','4','5','6','.','7','8','9','Clear','Cancel','0','Save','Keyboard'];
+  var overlay=document.getElementById('overlay');
+  var padButtons=[];
+  function el(id) {return document.getElementById(id);}
+  function textLine(cls, text) {var d=document.createElement('div'); d.className=cls;d.appendChild(document.createTextNode(String(text)));return d;}
+  function scrollToControl(control) {
+    // scrollIntoView(false) works on older Samsung Chromium without options object.
+    if(control && control.scrollIntoView) control.scrollIntoView(false);
+  }
+  function focusOne(control) {
+    var old=document.querySelectorAll('.tv-focus');
+    for(var i=0;i<old.length;i++)old[i].classList.remove('tv-focus');
+    if(!control)return;
+    control.classList.add('tv-focus');
+    try{control.focus();}catch(e){}
+    scrollToControl(control);
+  }
+  function focusAction(index) {
+    selected=Math.max(0,Math.min(actions.length-1,index));
+    focusOne(el(actions[selected]));
+  }
+  function focusPad(index) {
+    padSelected=Math.max(0,Math.min(padButtons.length-1,index));
+    focusOne(padButtons[padSelected]);
+  }
+  function presentValues() {
+    el('addressValue').textContent=receiver || 'Not entered';
+    el('pinValue').textContent=pin ? '********' : 'Not entered';
+  }
+  function updateEntry() {
+    el('entryText').textContent=entry || '(empty)';
+    el('inputHelp').textContent=editing==='pin'?'Eight digits required.':'Private IPv4 address required. Use the dot key between octets.';
+  }
+  function openPad(type) {
+    editing=type;
+    entry=type==='ip'?receiver:pin;
+    el('editorTitle').textContent=type==='ip'?'Receiver IP address':'One-time receiver code';
+    overlay.style.display='block';updateEntry();focusPad(0);
+  }
+  function closePad() {
+    overlay.style.display='none';
+    var returnTo=editing==='ip'?'editAddress':'editPin';
+    editing=''; focusAction(actions.indexOf(returnTo));
+  }
+  function privateIPv4(value) {
+    if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(value))return false;
+    var pieces=value.split('.');
+    for(var i=0;i<4;i++)if(Number(pieces[i])>255)return false;
+    var a=Number(pieces[0]),b=Number(pieces[1]);
+    return a===10||(a===172&&b>=16&&b<=31)||(a===192&&b===168);
+  }
+  function padPress(k) {
+    if(k==='Cancel'){closePad();return;}
+    if(k==='Backspace'){entry=entry.slice(0,-1);updateEntry();return;}
+    if(k==='Clear'){entry='';updateEntry();return;}
+    if(k==='Keyboard'){
+      // Optional fallback for USB/Bluetooth keyboards or the native Tizen IME.
+      var result=window.prompt(editing==='ip'?'Receiver IPv4 address':'Eight-digit receiver code',entry);
+      if(result!==null){entry=String(result).replace(/^\s+|\s+$/g,'');updateEntry();}
+      return;
+    }
+    if(k==='Save'){
+      if(editing==='ip'){
+        if(!privateIPv4(entry)){el('inputHelp').textContent='Not a private IPv4 address. Correct it before saving.';return;}
+        receiver=entry;
+      } else {
+        if(!/^\d{8}$/.test(entry)){el('inputHelp').textContent='The receiver code must have exactly 8 digits.';return;}
+        pin=entry;
+      }
+      presentValues(); closePad(); return;
+    }
+    if(k==='.') {
+      if(editing!=='ip'||!entry||entry.charAt(entry.length-1)==='.'||entry.split('.').length>=4)return;
+      entry+='.';
+    } else if(/^\d$/.test(k)) {
+      if(editing==='pin' && entry.length>=8) return;
+      if(editing==='ip' && entry.length>=15) return;
+      entry+=k;
+    }
+    updateEntry();
+  }
+  for(var n=0;n<keys.length;n++){
+    (function(index){
+      var b=document.createElement('button');b.type='button';b.className='key';
+      b.appendChild(document.createTextNode(keys[index]));
+      b.onclick=function(){padPress(keys[index]);};
+      el('pad').appendChild(b);padButtons.push(b);
+    })(n);
+  }
+  function refresh() {
+    state.textContent='Reading processes...';cached=null;
+    var x=new XMLHttpRequest();x.open('GET','http://127.0.0.1:38770/survey',true);x.timeout=8000;
+    x.onreadystatechange=function(){if(x.readyState!==4)return;
+      if(x.status!==200){state.textContent='Local survey HTTP '+x.status;return;}
+      try{var r=JSON.parse(x.responseText);cached=r;var h=r.host||{};
+        host.textContent=JSON.stringify({version:r.version,node:h.node,kernel:h.kernel,architecture:h.architecture,uid:h.uid,gid:h.gid,smack:h.smack,capEff:(h.status||{}).CapEff},null,2);
+        var p=r.processes||{};matches.textContent='';
+        matches.appendChild(textLine('meta',String(p.count||0)+' PIDs visible; '+(p.matches||[]).length+' keyword matches'));
+        if(p.error) matches.appendChild(textLine('meta',p.error));
+        (p.matches||[]).forEach(function(q){
+          var row=document.createElement('div');row.className='item';
+          row.appendChild(textLine('',q.name+' [PID '+q.pid+', UID '+q.uid+']'));
+          if(q.command)row.appendChild(textLine('meta',q.command));
+          row.appendChild(textLine('meta','SMACK: '+q.smack));matches.appendChild(row);
+        });
+        state.textContent='Survey ready';
+      }catch(e){state.textContent='Invalid survey: '+e;}
+    };
+    x.onerror=function(){state.textContent='Local survey unavailable';};
+    x.ontimeout=function(){state.textContent='Survey timed out';};x.send();
+  }
+  function exportReport(){
+    if(!privateIPv4(receiver)){transfer.textContent='Enter the receiver IP address first.';return;}
+    if(!/^\d{8}$/.test(pin)){transfer.textContent='Enter the 8-digit receiver code first.';return;}
+    if(!cached){transfer.textContent='Refresh survey before sending.';return;}
+    transfer.textContent='Sending only to the selected private IP...';
+    var x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:38770/export',true);x.timeout=15000;
+    x.setRequestHeader('Content-Type','application/json');
+    x.onreadystatechange=function(){if(x.readyState!==4)return;
+      var result={};try{result=JSON.parse(x.responseText);}catch(e){result={error:x.responseText||'No response'};}
+      if(x.status===200 && result.ok) transfer.textContent='Saved privately on receiver: '+(result.filename||'report.json');
+      else transfer.textContent='Export failed: '+(result.error||('HTTP '+x.status));
+    };
+    x.onerror=function(){transfer.textContent='Export error: local service unreachable.';};
+    x.ontimeout=function(){transfer.textContent='Export request timed out.';};
+    x.send(JSON.stringify({receiver:receiver,pin:pin}));
+  }
+  function exitModule(){
+    if(window.history && window.history.length>1){window.history.back();return;}
+    try{if(window.tizen&&tizen.application){tizen.application.getCurrentApplication().exit();return;}}catch(e){}
+    state.textContent='Use the Home button to exit this application.';
+  }
+  el('leave').onclick=exitModule;
+  el('leaveBottom').onclick=exitModule;
+  el('refresh').onclick=refresh;
+  el('preview').onclick=function(){
+    if(!cached){state.textContent='Refresh survey first.';return;}
+    var p=el('previewBox');p.style.display=p.style.display==='block'?'none':'block';
+    if(p.style.display==='block')el('full').textContent=JSON.stringify(cached,null,2);
+  };
+  el('editAddress').onclick=function(){openPad('ip');};
+  el('editPin').onclick=function(){openPad('pin');};
+  el('send').onclick=exportReport;
+  function keyName(e) {
+    var k=e.key||'';
+    var c=e.keyCode||e.which||0;
+    if(k==='ArrowUp'||k==='Up'||c===38)return 'up';
+    if(k==='ArrowDown'||k==='Down'||c===40)return 'down';
+    if(k==='ArrowLeft'||k==='Left'||c===37)return 'left';
+    if(k==='ArrowRight'||k==='Right'||c===39)return 'right';
+    if(k==='Enter'||k==='OK'||c===13)return 'enter';
+    if(k==='Escape'||k==='Esc'||k==='Back'||c===10009||c===27)return 'back';
+    if(/^\d$/.test(k))return k;
+    if(c>=48&&c<=57)return String.fromCharCode(c);
+    if(c>=96&&c<=105)return String(c-96);
+    return '';
+  }
+  function handleRemote(e) {
+    var k=keyName(e);
+    if(!k)return;
+    el('remoteDebug').textContent='Remote diagnostic: '+k+' ('+(e.keyCode||e.which||0)+')';
+    // Own all navigation, because older Tizen browsers do not provide spatial navigation.
+    if(e.preventDefault)e.preventDefault();
+    if(e.stopPropagation)e.stopPropagation();
+    if(editing){
+      if(k==='back'){closePad();return;}
+      if(k==='enter'){padButtons[padSelected].click();return;}
+      if(k==='up'){focusPad((padSelected+12)%16);return;}
+      if(k==='down'){focusPad((padSelected+4)%16);return;}
+      if(k==='left'){focusPad((padSelected+15)%16);return;}
+      if(k==='right'){focusPad((padSelected+1)%16);return;}
+      if(/^\d$/.test(k)){padPress(k);return;}
+    } else {
+      if(k==='back'){exitModule();return;}
+      if(k==='enter'){el(actions[selected]).click();return;}
+      if(k==='up'||k==='left'){focusAction(selected-1);return;}
+      if(k==='down'||k==='right'){focusAction(selected+1);return;}
+    }
+  }
+  // Keep our virtual selection synchronized with actual pointer/keyboard focus.
+  actions.forEach(function(id, i) {
+    el(id).addEventListener('focus', function() { selected=i; }, false);
+  });
+  padButtons.forEach(function(b, i) {
+    b.addEventListener('focus', function() { padSelected=i; }, false);
+  });
+  document.addEventListener('keydown',handleRemote,true);
+  window.addEventListener('tizenhwkey',function(e){if(e.keyName==='back'){if(editing)closePad();else exitModule();}});
+  presentValues();
+  focusAction(0);
+  refresh();
 })();
-</script></body></html>
+</script>
+</body>
+</html>

@@ -6,7 +6,7 @@
   var fs = require('fs');
   var os = require('os');
   var http = require('http');
-  var PORT = 38768;
+  var PORT = 38770;
   var RECEIVER_PORT = 38767;
   var MAX_REQUEST_BYTES = 512;
   var MAX_REPORT_BYTES = 256 * 1024;
@@ -51,7 +51,7 @@
   }
   function report() {
     return {
-      version: '0.4.0',
+      version: '0.5.0',
       host: {node: process.version, architecture: process.arch,
         uid: process.getuid ? process.getuid() : null,
         gid: process.getgid ? process.getgid() : null,
