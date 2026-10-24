@@ -1,0 +1,10 @@
+{
+  "name": "mu6300-readonly-probe",
+  "version": "0.1.0",
+  "description": "Read-only TizenBrew Node.js runtime and privilege probe",
+  "packageType": "app",
+  "appName": "MU6300 Read-Only Probe",
+  "appPath": "index.html",
+  "serviceFile": "service.js",
+  "keys": []
+}

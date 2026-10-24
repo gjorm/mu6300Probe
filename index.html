@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>MU6300 Read-Only Probe</title>
+<style>
+body{font-family:Arial,sans-serif;background:#101820;color:#f1f5f9;padding:30px}
+h1{font-size:32px} pre{background:#1e293b;border-radius:8px;padding:20px;white-space:pre-wrap;word-break:break-word;font-size:21px;line-height:1.6}
+small{color:#cbd5e1}
+</style></head><body>
+<h1>MU6300 Read-Only Probe</h1>
+<small>Runtime and privilege information only; no changes are made to the TV.</small>
+<pre id="output">Connecting to diagnostic service...</pre>
+<script>
+(function () {
+ var el = document.getElementById('output');
+ function check() {
+   var xhr = new XMLHttpRequest();
+   xhr.open('GET', 'http://127.0.0.1:38765/status', true);
+   xhr.timeout = 2000;
+   xhr.onreadystatechange = function() {
+     if(xhr.readyState !== 4) return;
+     if(xhr.status === 200) {
+       try { el.textContent = JSON.stringify(JSON.parse(xhr.responseText), null, 2); }
+       catch(e) { el.textContent = xhr.responseText; }
+     } else { el.textContent = 'Probe service not responding yet (HTTP ' + xhr.status + ').'; }
+   };
+   xhr.onerror = function () { el.textContent = 'Probe service not responding yet.'; };
+   xhr.send();
+ }
+ check(); setInterval(check, 3000);
+})();
+</script></body></html>
