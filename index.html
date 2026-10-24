@@ -1,30 +1,90 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>MU6300 Read-Only Probe</title>
+<html><head><meta charset="utf-8"><title>Local Process Survey</title>
 <style>
-body{font-family:Arial,sans-serif;background:#101820;color:#f1f5f9;padding:30px}
-h1{font-size:32px} pre{background:#1e293b;border-radius:8px;padding:20px;white-space:pre-wrap;word-break:break-word;font-size:21px;line-height:1.6}
-small{color:#cbd5e1}
+body{font-family:Arial,sans-serif;color:#eaf2ff;background:#0b1730;padding:26px;font-size:20px}
+h1{font-size:34px;margin:8px 0} h2{font-size:26px}
+.panel{background:#15294a;padding:18px;border-radius:10px;margin:16px 0}
+small,.note{font-size:17px;color:#c0d1ee}
+pre{white-space:pre-wrap;word-break:break-word;font-size:17px;line-height:1.45}
+button{font-size:21px;padding:12px 18px;background:#2469a6;color:white;border:0;border-radius:8px;margin:7px}
+input{font-size:22px;padding:12px;border-radius:7px;border:2px solid #4c668e;background:#f4f7fa;color:#152037;max-width:96%;box-sizing:border-box}
+label{display:block;margin:12px 0 6px}
+.item{border-top:1px solid #385372;padding:12px 0}
+.meta{color:#bfd0e5;font-size:17px;word-break:break-all}
+#transfer{font-size:20px;padding:12px;background:#243c5a;border-radius:7px}
 </style></head><body>
-<h1>MU6300 Read-Only Probe</h1>
-<small>Runtime and privilege information only; no changes are made to the TV.</small>
-<pre id="output">Connecting to diagnostic service...</pre>
+<h1>Local Process Survey <small>v0.3</small></h1>
+<p class="note">Reads process metadata only. Nothing is exported until you press Send.</p>
+<div class="panel">
+  <button id="refresh">Refresh survey</button> <button id="preview">Preview full JSON</button>
+  <span class="note" id="state">Loading...</span>
+</div>
+<div class="panel"><h2>Execution context</h2><pre id="host">Loading...</pre></div>
+<div class="panel"><h2>Matching processes</h2><div id="matches">Loading...</div></div>
+<div class="panel">
+  <h2>Export privately to your LAN computer</h2>
+  <p class="note">Enter the receiver computer's private IPv4 address and the eight-digit one-time code shown in its terminal. This address is not included in the public module or saved on the TV.</p>
+  <label for="address">Receiver IPv4 address</label>
+  <input id="address" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 192.168.1.10" />
+  <label for="pin">One-time receiver code (8 digits)</label>
+  <input id="pin" type="text" autocomplete="off" spellcheck="false" maxlength="8" placeholder="Enter 8 digits" />
+  <div><button id="send">Send survey to receiver</button></div>
+  <div id="transfer">Nothing has been sent.</div>
+  <p class="note">Uses HTTP directly from this TV to the receiver on TCP port 38767. No cloud storage. Review the saved report on your computer before sharing it.</p>
+</div>
+<div class="panel" id="previewBox" style="display:none"><h2>Full survey preview</h2><pre id="full"></pre></div>
 <script>
-(function () {
- var el = document.getElementById('output');
- function check() {
-   var xhr = new XMLHttpRequest();
-   xhr.open('GET', 'http://127.0.0.1:38765/status', true);
-   xhr.timeout = 2000;
-   xhr.onreadystatechange = function() {
-     if(xhr.readyState !== 4) return;
-     if(xhr.status === 200) {
-       try { el.textContent = JSON.stringify(JSON.parse(xhr.responseText), null, 2); }
-       catch(e) { el.textContent = xhr.responseText; }
-     } else { el.textContent = 'Probe service not responding yet (HTTP ' + xhr.status + ').'; }
+(function(){
+ var host=document.getElementById('host'),matches=document.getElementById('matches');
+ var state=document.getElementById('state'),transfer=document.getElementById('transfer');
+ var cached=null;
+ function para(cl,txt){var d=document.createElement('div');d.className=cl;d.appendChild(document.createTextNode(txt));return d;}
+ function refresh(){
+   state.textContent='Reading processes...';cached=null;
+   var x=new XMLHttpRequest();x.open('GET','http://127.0.0.1:38766/survey',true);x.timeout=8000;
+   x.onreadystatechange=function(){if(x.readyState!==4)return;
+     if(x.status!==200){state.textContent='Local survey HTTP '+x.status;return;}
+     try{var r=JSON.parse(x.responseText);cached=r;var h=r.host||{};
+       host.textContent=JSON.stringify({version:r.version,node:h.node,kernel:h.kernel,architecture:h.architecture,uid:h.uid,gid:h.gid,smack:h.smack,capEff:(h.status||{}).CapEff},null,2);
+       var p=r.processes||{};matches.textContent='';
+       matches.appendChild(para('meta',String(p.count||0)+' process IDs visible; '+(p.matches||[]).length+' keyword matches'));
+       if(p.error)matches.appendChild(para('meta',p.error));
+       (p.matches||[]).forEach(function(e){var el=document.createElement('div');el.className='item';
+          el.appendChild(para('',e.name+' [PID '+e.pid+', UID '+e.uid+']'));
+          if(e.command)el.appendChild(para('meta',e.command));
+          el.appendChild(para('meta','SMACK: '+e.smack));matches.appendChild(el);
+       });
+       state.textContent='Survey ready';
+     }catch(e){state.textContent='Invalid survey: '+e;}
    };
-   xhr.onerror = function () { el.textContent = 'Probe service not responding yet.'; };
-   xhr.send();
+   x.onerror=function(){state.textContent='Local survey unavailable';};
+   x.ontimeout=function(){state.textContent='Survey timed out';};x.send();
  }
- check(); setInterval(check, 3000);
+ function exportReport(){
+   var address=document.getElementById('address').value.replace(/^\s+|\s+$/g,'');
+   var pin=document.getElementById('pin').value.replace(/^\s+|\s+$/g,'');
+   if(!/^\d{8}$/.test(pin)){transfer.textContent='Enter the eight-digit code shown on LilBox.';return;}
+   if(!address){transfer.textContent='Enter a private IPv4 address.';return;}
+   if(!cached){transfer.textContent='Refresh the survey first.';return;}
+   transfer.textContent='Sending over local network...';
+   var x=new XMLHttpRequest();x.open('POST','http://127.0.0.1:38766/export',true);
+   x.timeout=15000;x.setRequestHeader('Content-Type','application/json');
+   x.onreadystatechange=function(){if(x.readyState!==4)return;
+     var data;try{data=JSON.parse(x.responseText);}catch(e){data={error:x.responseText||'No response'};}
+     if(x.status===200&&data.ok){transfer.textContent='Export received by LilBox. Saved as '+data.filename;}
+     else{transfer.textContent='Export failed: '+(data.error||('HTTP '+x.status));}
+   };
+   x.onerror=function(){transfer.textContent='Export failed: local module service unavailable or blocked.';};
+   x.ontimeout=function(){transfer.textContent='Export timed out.';};
+   x.send(JSON.stringify({receiver:address,pin:pin}));
+ }
+ document.getElementById('refresh').onclick=refresh;
+ document.getElementById('send').onclick=exportReport;
+ document.getElementById('preview').onclick=function(){
+   if(!cached){state.textContent='Refresh the survey first.';return;}
+   var b=document.getElementById('previewBox');b.style.display='block';
+   document.getElementById('full').textContent=JSON.stringify(cached,null,2);
+ };
+ refresh();
 })();
 </script></body></html>

@@ -1,9 +1,9 @@
 {
-  "name": "mu6300-readonly-probe",
-  "version": "0.1.0",
-  "description": "Read-only TizenBrew Node.js runtime and privilege probe",
+  "name": "tizen-local-process-export",
+  "version": "0.3.0",
+  "description": "Read-only process survey with an opt-in local network export",
   "packageType": "app",
-  "appName": "MU6300 Read-Only Probe",
+  "appName": "Local Process Survey",
   "appPath": "index.html",
   "serviceFile": "service.js",
   "keys": []
